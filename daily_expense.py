@@ -68,7 +68,7 @@ with tab1:
         df = pd.concat([df, new_entry], ignore_index=True)
         save_data(df)
         st.success("Expense saved successfully!")
-        st.experimental_rerun()
+        st.rerun()
 
 with tab2:
     st.header("Daily Expenses")
