@@ -5,6 +5,7 @@ from datetime import datetime
 
 # Define the file name
 FILE_NAME = "daily_expenses.xlsx"
+LIMIT_FILE = "expense_limit.txt"
 
 def load_data():
     """Load expense data from an Excel file or create an empty DataFrame if file doesn't exist."""
@@ -17,8 +18,38 @@ def save_data(df):
     """Save the DataFrame to an Excel file."""
     df.to_excel(FILE_NAME, index=False)
 
+def load_limit():
+    """Load the monthly expense limit from a file."""
+    if os.path.exists(LIMIT_FILE):
+        with open(LIMIT_FILE, "r") as file:
+            return float(file.read().strip())
+    return 0.0
+
+def save_limit(limit):
+    """Save the monthly expense limit to a file."""
+    with open(LIMIT_FILE, "w") as file:
+        file.write(str(limit))
+
+def calculate_remaining_limit():
+    """Calculate the remaining limit for the month."""
+    df = load_data()
+    df["Date"] = pd.to_datetime(df["Date"])
+    current_month = datetime.today().month
+    monthly_expense = df[df["Date"].dt.month == current_month]["Amount"].sum()
+    return load_limit() - monthly_expense
+
 # Streamlit UI
 st.title("Daily Expense Tracker")
+
+# Set Monthly Expense Limit
+st.sidebar.header("Set Monthly Expense Limit")
+monthly_limit = st.sidebar.number_input("Enter Monthly Limit (₹)", min_value=0.0, value=load_limit(), format="%.2f")
+if st.sidebar.button("Save Limit"):
+    save_limit(monthly_limit)
+    st.sidebar.success("Monthly limit saved successfully!")
+
+remaining_limit = calculate_remaining_limit()
+st.sidebar.metric("Remaining Limit (₹)", f"{remaining_limit:.2f}")
 
 # Tabs for entering and viewing expenses
 tab1, tab2 = st.tabs(["Enter Expense", "View Expenses"])
@@ -37,6 +68,7 @@ with tab1:
         df = pd.concat([df, new_entry], ignore_index=True)
         save_data(df)
         st.success("Expense saved successfully!")
+        st.experimental_rerun()
 
 with tab2:
     st.header("Daily Expenses")
