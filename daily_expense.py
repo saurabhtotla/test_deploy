@@ -68,11 +68,14 @@ with tab1:
         df = pd.concat([df, new_entry], ignore_index=True)
         save_data(df)
         st.success("Expense saved successfully!")
-        st.rerun()
+        st.experimental_rerun()
 
 with tab2:
     st.header("Daily Expenses")
     df = load_data()
+    
+    # Display remaining limit
+    st.metric("Remaining Limit (₹)", f"{calculate_remaining_limit():.2f}")
     
     # Filter by date range
     start_date = st.date_input("Start Date", df["Date"].min() if not df.empty else datetime.today())
